@@ -28,67 +28,6 @@ const initialForm: EvaluacionFormData = {
   nivel_cansancio: undefined, percepcion_rendimiento: '',
 }
 
-const COUNTRIES = [
-  { code: '+507', flag: '🇵🇦', name: 'Panamá' },
-  { code: '+57',  flag: '🇨🇴', name: 'Colombia' },
-  { code: '+506', flag: '🇨🇷', name: 'Costa Rica' },
-  { code: '+52',  flag: '🇲🇽', name: 'México' },
-  { code: '+1',   flag: '🇺🇸', name: 'USA' },
-  { code: '+58',  flag: '🇻🇪', name: 'Venezuela' },
-  { code: '+34',  flag: '🇪🇸', name: 'España' },
-  { code: '+1809',flag: '🇩🇴', name: 'Rep. Dominicana' },
-  { code: '+502', flag: '🇬🇹', name: 'Guatemala' },
-  { code: '+503', flag: '🇸🇻', name: 'El Salvador' },
-  { code: '+504', flag: '🇭🇳', name: 'Honduras' },
-  { code: '+505', flag: '🇳🇮', name: 'Nicaragua' },
-]
-
-function PhoneField({ name, value, onChange }: {
-  name: string; value: string | undefined; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-}) {
-  const [countryCode, setCountryCode] = useState(() => {
-    if (!value) return '+507'
-    const match = COUNTRIES.find(c => value.startsWith(c.code))
-    return match ? match.code : '+507'
-  })
-  const [number, setNumber] = useState(() => {
-    if (!value) return ''
-    const match = COUNTRIES.find(c => value.startsWith(c.code))
-    return match ? value.slice(match.code.length).trim() : value
-  })
-
-  const emit = (code: string, num: string) => {
-    const combined = `${code} ${num}`.trim()
-    onChange({ target: { name, value: combined, type: 'text' } } as React.ChangeEvent<HTMLInputElement>)
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <label className="block text-sm text-white/60">Teléfono</label>
-      <div className="flex gap-2">
-        <select
-          value={countryCode}
-          onChange={e => { setCountryCode(e.target.value); emit(e.target.value, number) }}
-          className="bg-white/5 border border-white/10 rounded-sm px-3 py-3 text-white focus:outline-none focus:border-red-700 transition-colors text-sm cursor-pointer"
-          style={{ width: '6rem' }}
-        >
-          {COUNTRIES.map(c => (
-            <option key={`${c.code}-${c.name}`} value={c.code} className="bg-black">
-              {c.flag} {c.code}
-            </option>
-          ))}
-        </select>
-        <input
-          type="tel"
-          value={number}
-          onChange={e => { setNumber(e.target.value); emit(countryCode, e.target.value) }}
-          placeholder="6000-0000"
-          className="flex-1 bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-sm"
-        />
-      </div>
-    </div>
-  )
-}
 
 function InputField({ label, name, value, onChange, type = 'text', placeholder = '', required = false }: {
   label: string; name: string; value: string | number | undefined; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -337,7 +276,7 @@ export default function FormularioEvaluacion() {
                 <div className="col-span-2">
                   <InputField label="Email" name="email" value={form.email} onChange={handleChange} type="email" required placeholder="tu@email.com" />
                 </div>
-                <PhoneField name="telefono" value={form.telefono} onChange={handleChange} />
+                <InputField label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} placeholder="+507 6000-0000" />
                 <InputField label="Edad" name="edad" value={form.edad} onChange={handleChange} type="number" placeholder="25" />
               </div>
               <SelectField
