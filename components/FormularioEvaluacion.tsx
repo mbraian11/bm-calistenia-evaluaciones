@@ -16,7 +16,7 @@ const stepTitles = [
 ]
 
 const initialForm: EvaluacionFormData = {
-  nombre: '', email: '', telefono: '', edad: undefined, genero: '', peso_kg: undefined, altura_cm: undefined,
+  nombre: '', email: '', telefono: '+507 ', edad: undefined, genero: '', peso_kg: undefined, altura_cm: undefined,
   programa: '', tiempo_en_bm: '', objetivo_principal: '', objetivo_detallado: '',
   ocupacion: '', nivel_estres: '', horas_sueno: undefined, calidad_sueno: '', comidas_dia: undefined,
   descripcion_alimentacion: '', restricciones_alimentarias: '', suplementos: '',
