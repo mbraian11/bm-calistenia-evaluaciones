@@ -138,7 +138,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-8 px-6 text-center">
-        <p className="text-xs text-white/20">© 2024 BM Calistenia. Todos los derechos reservados.</p>
+        <p className="text-xs text-white/20">© 2026 BM Calistenia. Todos los derechos reservados.</p>
       </footer>
     </main>
   )
