@@ -239,8 +239,8 @@ const body = await req.json()
     }
 
     const message = await getAnthropic().messages.create({
-      model: 'claude-opus-4-7',
-      max_tokens: 8000,
+      model: 'claude-sonnet-4-5',
+      max_tokens: 6000,
       messages: [{ role: 'user', content: userContent }],
     })
 
