@@ -254,31 +254,31 @@ export default async function ReportePage({ params }: { params: Promise<{ id: st
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <div className="border-b border-white/5 bg-black/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.png" alt="BM Calistenia" width={38} height={38} className="object-contain" />
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="BM Calistenia" width={34} height={34} className="object-contain" />
             <div>
-              <p className="text-sm font-semibold tracking-wide uppercase leading-none">BM Calistenia</p>
-              <p className="text-xs text-white/40 uppercase tracking-widest mt-0.5">Reporte de Evaluación</p>
+              <p className="text-xs font-semibold tracking-wide uppercase leading-none">BM Calistenia</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5 hidden sm:block">Reporte de Evaluación</p>
             </div>
           </div>
-          <Link href="/evaluacion" className="text-xs text-red-400 hover:text-red-300 transition-colors">
+          <Link href="/evaluacion" className="text-xs text-red-400 hover:text-red-300 transition-colors whitespace-nowrap">
             Nueva evaluación →
           </Link>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* Encabezado del reporte */}
-        <div className="mb-12">
+        <div className="mb-8 md:mb-12">
           <div className="absolute left-0 right-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(185,28,28,0.1)_0%,_transparent_70%)] pointer-events-none" />
 
-          <div className="inline-flex items-center gap-2 bg-green-950/40 border border-green-800/30 rounded-full px-4 py-1.5 text-xs text-green-400 uppercase tracking-widest mb-6">
+          <div className="inline-flex items-center gap-2 bg-green-950/40 border border-green-800/30 rounded-full px-4 py-1.5 text-xs text-green-400 uppercase tracking-widest mb-4">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
             Evaluación completada
           </div>
 
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">
+          <h1 className="font-display text-2xl md:text-5xl font-bold mb-3 leading-tight">
             Reporte de {evaluacion.nombre}
           </h1>
 
@@ -340,14 +340,14 @@ export default async function ReportePage({ params }: { params: Promise<{ id: st
           <Section title="Percepción del entrenamiento">
             <div className="space-y-4">
               {evaluacion.sesiones_semana_bm && (
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-white/40 uppercase tracking-wider w-48 shrink-0">Sesiones/semana en BM</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <span className="text-xs text-white/40 uppercase tracking-wider">Sesiones/semana en BM</span>
                   <span className="text-lg font-bold">{evaluacion.sesiones_semana_bm}</span>
                 </div>
               )}
               {evaluacion.nivel_cansancio && (
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-white/40 uppercase tracking-wider w-48 shrink-0">Nivel de cansancio</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <span className="text-xs text-white/40 uppercase tracking-wider">Nivel de cansancio</span>
                   <span className="text-lg font-bold">{evaluacion.nivel_cansancio}<span className="text-sm text-white/40">/10</span></span>
                 </div>
               )}

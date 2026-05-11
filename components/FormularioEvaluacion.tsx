@@ -231,7 +231,7 @@ export default function FormularioEvaluacion() {
   const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-12">
+    <div className="min-h-screen bg-black text-white px-4 py-8 md:py-12">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-10">
@@ -269,15 +269,13 @@ export default function FormularioEvaluacion() {
 
           {step === 1 && (
             <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <InputField label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} required placeholder="Tu nombre" />
+              <div className="space-y-4">
+                <InputField label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} required placeholder="Tu nombre" />
+                <InputField label="Email" name="email" value={form.email} onChange={handleChange} type="email" required placeholder="tu@email.com" />
+                <div className="grid grid-cols-2 gap-4">
+                  <InputField label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} placeholder="+507 6000-0000" />
+                  <InputField label="Edad" name="edad" value={form.edad} onChange={handleChange} type="number" placeholder="25" />
                 </div>
-                <div className="col-span-2">
-                  <InputField label="Email" name="email" value={form.email} onChange={handleChange} type="email" required placeholder="tu@email.com" />
-                </div>
-                <InputField label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} placeholder="+507 6000-0000" />
-                <InputField label="Edad" name="edad" value={form.edad} onChange={handleChange} type="number" placeholder="25" />
               </div>
               <SelectField
                 label="Género"

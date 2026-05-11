@@ -87,68 +87,85 @@ export default async function AdminPage() {
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Alumno</th>
-                    <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Programa</th>
-                    <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Objetivo</th>
-                    <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Estado</th>
-                    <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Fecha</th>
-                    <th className="text-right px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {evaluaciones.map((e, i) => {
-                    const badge = ESTADO_BADGE[e.estado || 'pendiente']
-                    return (
-                      <tr
-                        key={e.id}
-                        className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}
-                      >
-                        <td className="px-6 py-4">
-                          <div>
+            <>
+              {/* Tabla — desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/5">
+                      <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Alumno</th>
+                      <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Programa</th>
+                      <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Objetivo</th>
+                      <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Estado</th>
+                      <th className="text-left px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Fecha</th>
+                      <th className="text-right px-6 py-3 text-xs text-white/30 uppercase tracking-wider font-normal">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {evaluaciones.map((e, i) => {
+                      const badge = ESTADO_BADGE[e.estado || 'pendiente']
+                      return (
+                        <tr key={e.id} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                          <td className="px-6 py-4">
                             <p className="font-medium text-white">{e.nombre}</p>
                             <p className="text-xs text-white/40">{e.email}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-white/60 capitalize">
-                          {e.programa?.replace(/_/g, ' ') || '—'}
-                        </td>
-                        <td className="px-6 py-4 text-white/60 capitalize">
-                          {e.objetivo_principal?.replace(/_/g, ' ') || '—'}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${badge.color}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-white/40 text-xs">
-                          {new Date(e.created_at || '').toLocaleDateString('es-PA', {
-                            day: '2-digit', month: 'short', year: 'numeric'
-                          })}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          {e.estado === 'completado' ? (
-                            <Link
-                              href={`/reporte/${e.id}`}
-                              className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                            >
-                              Ver reporte →
-                            </Link>
-                          ) : e.estado === 'pendiente' || e.estado === 'error' ? (
-                            <RegenerarButton id={e.id!} />
-                          ) : (
-                            <span className="text-xs text-blue-400">Procesando...</span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                          <td className="px-6 py-4 text-white/60 capitalize">{e.programa?.replace(/_/g, ' ') || '—'}</td>
+                          <td className="px-6 py-4 text-white/60 capitalize">{e.objetivo_principal?.replace(/_/g, ' ') || '—'}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${badge.color}`}>{badge.label}</span>
+                          </td>
+                          <td className="px-6 py-4 text-white/40 text-xs">
+                            {new Date(e.created_at || '').toLocaleDateString('es-PA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {e.estado === 'completado' ? (
+                              <Link href={`/reporte/${e.id}`} className="text-xs text-red-400 hover:text-red-300 transition-colors">Ver reporte →</Link>
+                            ) : e.estado === 'pendiente' || e.estado === 'error' ? (
+                              <RegenerarButton id={e.id!} />
+                            ) : (
+                              <span className="text-xs text-blue-400">Procesando...</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards — móvil */}
+              <div className="md:hidden divide-y divide-white/[0.04]">
+                {evaluaciones.map((e) => {
+                  const badge = ESTADO_BADGE[e.estado || 'pendiente']
+                  return (
+                    <div key={e.id} className="px-4 py-4 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-white text-sm">{e.nombre}</p>
+                          <p className="text-xs text-white/40">{e.email}</p>
+                        </div>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border shrink-0 ${badge.color}`}>{badge.label}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-white/50">
+                        <span className="capitalize">{e.objetivo_principal?.replace(/_/g, ' ') || '—'}</span>
+                        <span>·</span>
+                        <span>{new Date(e.created_at || '').toLocaleDateString('es-PA', { day: '2-digit', month: 'short' })}</span>
+                      </div>
+                      <div className="pt-1">
+                        {e.estado === 'completado' ? (
+                          <Link href={`/reporte/${e.id}`} className="text-xs text-red-400 hover:text-red-300 transition-colors">Ver reporte →</Link>
+                        ) : e.estado === 'pendiente' || e.estado === 'error' ? (
+                          <RegenerarButton id={e.id!} />
+                        ) : (
+                          <span className="text-xs text-blue-400">Procesando...</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>
