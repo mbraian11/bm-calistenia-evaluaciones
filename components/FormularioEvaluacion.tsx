@@ -72,21 +72,80 @@ function SelectField({ label, name, value, onChange, options, required = false }
   )
 }
 
-function TextareaField({ label, name, value, onChange, placeholder = '', rows = 3 }: {
+function VoiceButton({ onText }: { onText: (text: string) => void }) {
+  const [recording, setRecording] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null)
+
+  const toggle = () => {
+    if (recording) {
+      recognitionRef.current?.stop()
+      setRecording(false)
+      return
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognitionAPI) {
+      alert('Tu navegador no soporta dictado por voz. Usa Google Chrome.')
+      return
+    }
+    const recognition = new SpeechRecognitionAPI()
+    recognition.lang = 'es'
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.onresult = (event: { results: { [s: number]: { [s: number]: { transcript: string } } } }) => {
+      const transcript = event.results[0][0].transcript
+      onText(transcript)
+    }
+    recognition.onend = () => setRecording(false)
+    recognition.onerror = () => setRecording(false)
+    recognition.start()
+    recognitionRef.current = recognition
+    setRecording(true)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={recording ? 'Detener grabación' : 'Dictar por voz'}
+      className={`absolute right-2 bottom-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+        recording
+          ? 'bg-red-600 animate-pulse shadow-[0_0_14px_rgba(220,38,38,0.7)]'
+          : 'bg-white/10 hover:bg-white/20'
+      }`}
+    >
+      {recording ? (
+        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white">
+          <rect x="6" y="6" width="12" height="12" rx="2" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white">
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zM5 12a7 7 0 0 0 14 0h2a9 9 0 0 1-8 8.94V23h-2v-2.06A9 9 0 0 1 3 12H5z" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+function TextareaField({ label, name, value, onChange, placeholder = '', rows = 3, voice = false, onVoiceInput }: {
   label: string; name: string; value: string | undefined; onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  placeholder?: string; rows?: number
+  placeholder?: string; rows?: number; voice?: boolean; onVoiceInput?: (text: string) => void
 }) {
   return (
     <div className="space-y-1.5">
       <label className="block text-sm text-white/60">{label}</label>
-      <textarea
-        name={name}
-        value={value ?? ''}
-        onChange={onChange}
-        placeholder={placeholder}
-        rows={rows}
-        className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-sm resize-none"
-      />
+      <div className="relative">
+        <textarea
+          name={name}
+          value={value ?? ''}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={rows}
+          className={`w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-sm resize-none ${voice ? 'pr-12' : ''}`}
+        />
+        {voice && onVoiceInput && <VoiceButton onText={onVoiceInput} />}
+      </div>
     </div>
   )
 }
@@ -117,6 +176,13 @@ export default function FormularioEvaluacion() {
       ...prev,
       inbody_resultados: { ...prev.inbody_resultados, [name]: value }
     }))
+  }
+
+  const appendVoiceText = (field: keyof EvaluacionFormData) => (text: string) => {
+    setForm(prev => {
+      const current = (prev[field] as string) ?? ''
+      return { ...prev, [field]: current ? `${current} ${text}` : text }
+    })
   }
 
   const handleFileChange = (key: keyof typeof files) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,6 +338,8 @@ export default function FormularioEvaluacion() {
                 onChange={handleChange}
                 placeholder="¿Qué resultado específico quieres lograr? ¿En cuánto tiempo?"
                 rows={4}
+                voice
+                onVoiceInput={appendVoiceText('objetivo_detallado')}
               />
             </>
           )}
@@ -314,6 +382,8 @@ export default function FormularioEvaluacion() {
                 onChange={handleChange}
                 placeholder="¿Qué comes normalmente? Desayuno, almuerzo, cena y snacks. Sé específico."
                 rows={5}
+                voice
+                onVoiceInput={appendVoiceText('descripcion_alimentacion')}
               />
               <TextareaField
                 label="Restricciones alimentarias"
@@ -443,6 +513,8 @@ export default function FormularioEvaluacion() {
                   onChange={handleChange}
                   placeholder="¿Cómo te sientes durante esta sesión? ¿Qué ejercicios te cuestan más? ¿Cómo terminas?"
                   rows={4}
+                  voice
+                  onVoiceInput={appendVoiceText('sesion_1_descripcion')}
                 />
 
                 <TextareaField
@@ -452,6 +524,8 @@ export default function FormularioEvaluacion() {
                   onChange={handleChange}
                   placeholder="¿Te resulta fácil o difícil? ¿Sientes progreso? ¿Hay algo que te frustre o que disfrutes?"
                   rows={4}
+                  voice
+                  onVoiceInput={appendVoiceText('sesion_2_descripcion')}
                 />
 
                 <TextareaField
@@ -461,6 +535,8 @@ export default function FormularioEvaluacion() {
                   onChange={handleChange}
                   placeholder="¿Te sientes más activo o más cansado? ¿Nota tu cuerpo cambios? ¿Cómo influye en tu vida fuera del gimnasio?"
                   rows={4}
+                  voice
+                  onVoiceInput={appendVoiceText('sesion_3_descripcion')}
                 />
 
                 <div>
@@ -492,6 +568,8 @@ export default function FormularioEvaluacion() {
                   onChange={handleChange}
                   placeholder="¿Sientes que mejoras? ¿Hay algo que sientes que te limita? ¿Qué cambiarías de cómo entrenas?"
                   rows={4}
+                  voice
+                  onVoiceInput={appendVoiceText('percepcion_rendimiento')}
                 />
               </div>
 
