@@ -40,6 +40,17 @@ function ProcesandoContent() {
 
     let attempts = 0
     const maxAttempts = 60
+    let triggered = false
+
+    const triggerGeneration = async () => {
+      if (triggered) return
+      triggered = true
+      await fetch(`/api/generate-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      }).catch(() => {})
+    }
 
     const poll = async () => {
       attempts++
@@ -54,8 +65,12 @@ function ProcesandoContent() {
           setTimeout(() => router.push(`/reporte/${id}`), 800)
         } else if (data.estado === 'error') {
           router.push(`/reporte/${id}?error=1`)
-        } else if (attempts < maxAttempts) {
-          setTimeout(poll, 3000)
+        } else {
+          // Si sigue pendiente después de 2 intentos, disparar generación como respaldo
+          if (data.estado === 'pendiente' && attempts >= 2) {
+            triggerGeneration()
+          }
+          if (attempts < maxAttempts) setTimeout(poll, 3000)
         }
       } catch {
         if (attempts < maxAttempts) setTimeout(poll, 3000)
