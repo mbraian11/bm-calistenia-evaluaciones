@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
 import Link from 'next/link'
 import Image from 'next/image'
+import RegenerarButton from './RegenerarButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -136,8 +137,10 @@ export default async function AdminPage() {
                             >
                               Ver reporte →
                             </Link>
+                          ) : e.estado === 'pendiente' || e.estado === 'error' ? (
+                            <RegenerarButton id={e.id!} />
                           ) : (
-                            <span className="text-xs text-white/20">Pendiente</span>
+                            <span className="text-xs text-blue-400">Procesando...</span>
                           )}
                         </td>
                       </tr>
