@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
@@ -202,81 +202,69 @@ const body = await req.json()
     // Marcar como procesando
     await supabase.from('evaluaciones').update({ estado: 'procesando' }).eq('id', id)
 
-    // Obtener datos completos
-    const { data: evaluacion, error } = await supabase
-      .from('evaluaciones')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error || !evaluacion) throw new Error('Evaluación no encontrada')
-
-    // Llamar a Claude — con imagen InBody si existe
-    const prompt = buildPrompt(evaluacion)
-
-    type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
-    type MsgContent = { type: 'text'; text: string } | { type: 'image'; source: { type: 'base64'; media_type: ImageMediaType; data: string } }
-
-    let userContent: MsgContent[] | string = prompt
-
-    if (evaluacion.inbody_url) {
+    // Responder inmediatamente — Claude corre en after() independiente del navegador
+    after(async () => {
+      const supabaseAfter = createServiceClient()
       try {
-        // Extraer path del archivo desde la URL de Supabase storage
-        const urlPath = evaluacion.inbody_url.split('/storage/v1/object/public/')[1] || ''
-        const [bucket, ...rest] = urlPath.split('/')
-        const filePath = rest.join('/')
+        const { data: evaluacion, error } = await supabaseAfter
+          .from('evaluaciones').select('*').eq('id', id).single()
+        if (error || !evaluacion) throw new Error('Evaluación no encontrada')
 
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from(bucket)
-          .download(filePath)
+        const prompt = buildPrompt(evaluacion)
 
-        if (!fileError && fileData) {
-          const arrayBuffer = await fileData.arrayBuffer()
-          const base64 = Buffer.from(arrayBuffer).toString('base64')
-          const rawType = fileData.type || 'image/jpeg'
-          const mediaType: ImageMediaType = (['image/jpeg','image/png','image/webp','image/gif'].includes(rawType)
-            ? rawType : 'image/jpeg') as ImageMediaType
+        type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+        type MsgContent = { type: 'text'; text: string } | { type: 'image'; source: { type: 'base64'; media_type: ImageMediaType; data: string } }
 
-          userContent = [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: `La imagen anterior es el reporte InBody del alumno. Extrae TODOS los datos visibles (masa muscular, masa grasa, % grasa, IMC, agua corporal, metabolismo basal, puntuación InBody, etc.) y úsalos directamente en el análisis — NO digas que no tienes datos InBody si los ves en la imagen.\n\n${prompt}` }
-          ]
+        let userContent: MsgContent[] | string = prompt
+
+        if (evaluacion.inbody_url) {
+          try {
+            const urlPath = evaluacion.inbody_url.split('/storage/v1/object/public/')[1] || ''
+            const [bucket, ...rest] = urlPath.split('/')
+            const filePath = rest.join('/')
+            const { data: fileData, error: fileError } = await supabaseAfter.storage.from(bucket).download(filePath)
+            if (!fileError && fileData) {
+              const arrayBuffer = await fileData.arrayBuffer()
+              const base64 = Buffer.from(arrayBuffer).toString('base64')
+              const rawType = fileData.type || 'image/jpeg'
+              const mediaType: ImageMediaType = (['image/jpeg','image/png','image/webp','image/gif'].includes(rawType) ? rawType : 'image/jpeg') as ImageMediaType
+              userContent = [
+                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                { type: 'text', text: `La imagen anterior es el reporte InBody del alumno. Extrae TODOS los datos visibles y úsalos directamente en el análisis.\n\n${prompt}` }
+              ]
+            }
+          } catch { /* continúa sin imagen */ }
         }
-      } catch {
-        // Si falla la imagen, continúa sin ella
-      }
-    }
 
-    // Streaming: guardar token a token para no perder contenido si hay timeout
-    let reporte = ''
-    const stream = getAnthropic().messages.stream({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: userContent }],
+        const message = await getAnthropic().messages.create({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 3000,
+          messages: [{ role: 'user', content: userContent }],
+        })
+
+        const reporte = message.content[0].type === 'text' ? message.content[0].text : ''
+
+        await supabaseAfter.from('evaluaciones').update({
+          reporte_completo: reporte,
+          estado: 'completado',
+          reporte_generado_at: new Date().toISOString(),
+        }).eq('id', id)
+
+        // Email
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soy.bmcalistenia.com'
+        fetch(`${appUrl}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, nombre: evaluacion.nombre, email: evaluacion.email }),
+        }).catch(() => {})
+
+      } catch (err) {
+        console.error('[generate-report after()] error:', err)
+        await supabaseAfter.from('evaluaciones').update({ estado: 'error' }).eq('id', id)
+      }
     })
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        reporte += chunk.delta.text
-      }
-    }
-
-    // Guardar reporte y marcar completado
-    await supabase.from('evaluaciones').update({
-      reporte_completo: reporte,
-      estado: 'completado',
-      reporte_generado_at: new Date().toISOString(),
-    }).eq('id', id)
-
-    // Enviar email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soy.bmcalistenia.com'
-    fetch(`${appUrl}/api/send-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nombre: evaluacion.nombre, email: evaluacion.email }),
-    }).catch(() => {})
-
-    return NextResponse.json({ success: true, id })
+    return NextResponse.json({ ok: true, id })
   } catch (err: unknown) {
     console.error('[generate-report] error:', err)
     if (id) {
