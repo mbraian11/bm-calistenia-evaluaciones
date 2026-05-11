@@ -192,11 +192,11 @@ const body = await req.json()
 
     const supabase = createServiceClient()
 
-    // Verificar estado actual — solo generar si está pendiente
+    // Verificar estado actual — solo bloquear si ya está completado
     const { data: current } = await supabase
       .from('evaluaciones').select('estado').eq('id', id).single()
-    if (current?.estado === 'completado' || current?.estado === 'procesando') {
-      return NextResponse.json({ estado: current.estado })
+    if (current?.estado === 'completado') {
+      return NextResponse.json({ estado: 'completado' })
     }
 
     // Marcar como procesando

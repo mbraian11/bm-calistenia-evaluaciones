@@ -9,7 +9,8 @@ export default function RegenerarButton({ id }: { id: string }) {
 
   const handleRegenerar = async () => {
     setLoading(true)
-    await fetch('/api/generate-report', {
+    // Resetear a pendiente para que el chequeo de idempotencia lo permita
+    await fetch('/api/reset-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
