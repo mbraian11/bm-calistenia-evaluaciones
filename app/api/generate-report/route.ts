@@ -5,8 +5,11 @@ import { Evaluacion } from '@/types/evaluacion'
 
 export const maxDuration = 60
 
+// Capturar al nivel del módulo para garantizar acceso dentro de after()
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
+
 function getAnthropic() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  return new Anthropic({ apiKey: ANTHROPIC_API_KEY })
 }
 
 function buildPrompt(e: Evaluacion): string {
@@ -186,17 +189,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   let id: string | undefined
   try {
-const body = await req.json()
+    const body = await req.json()
     id = body.id
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     const supabase = createServiceClient()
 
-    // Verificar estado actual — solo bloquear si ya está completado
+    // Verificar estado actual — bloquear si ya está completado o procesando para evitar doble llamada a Claude
     const { data: current } = await supabase
       .from('evaluaciones').select('estado').eq('id', id).single()
-    if (current?.estado === 'completado') {
-      return NextResponse.json({ estado: 'completado' })
+    if (current?.estado === 'completado' || current?.estado === 'procesando') {
+      return NextResponse.json({ estado: current.estado })
     }
 
     // Marcar como procesando

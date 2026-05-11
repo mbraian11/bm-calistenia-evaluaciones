@@ -20,6 +20,9 @@ function ProcesandoContent() {
   const [messageIndex, setMessageIndex] = useState(0)
   const [dots, setDots] = useState('')
   const [progress, setProgress] = useState(0)
+  const [timedOut, setTimedOut] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [retrying, setRetrying] = useState(false)
 
   useEffect(() => {
     const msgInterval = setInterval(() => {
@@ -60,18 +63,83 @@ function ProcesandoContent() {
           setProgress(100)
           setTimeout(() => router.push(`/reporte/${id}`), 800)
         } else if (data.estado === 'error') {
-          router.push(`/reporte/${id}?error=1`)
+          setHasError(true)
         } else {
-          if (attempts < maxAttempts) setTimeout(poll, 3000)
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 3000)
+          } else {
+            setTimedOut(true)
+          }
         }
       } catch {
-        if (attempts < maxAttempts) setTimeout(poll, 3000)
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 3000)
+        } else {
+          setTimedOut(true)
+        }
       }
     }
 
     const timeout = setTimeout(poll, 2000)
     return () => clearTimeout(timeout)
   }, [id, router])
+
+  const handleRetry = async () => {
+    setRetrying(true)
+    setHasError(false)
+    setTimedOut(false)
+    setProgress(0)
+
+    // Resetear estado en DB
+    await fetch('/api/reset-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    }).catch(() => {})
+
+    // Redirigir de nuevo a procesando para reiniciar el flujo limpio
+    router.push(`/procesando?id=${id}`)
+  }
+
+  if (hasError || timedOut) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(185,28,28,0.05)_0%,_transparent_70%)] pointer-events-none" />
+        <div className="relative text-center max-w-md">
+          <div className="w-14 h-14 bg-red-950/60 border border-red-800/40 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-6 h-6 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h1 className="font-display text-2xl font-bold mb-3">
+            {timedOut ? 'Ha tardado más de lo esperado' : 'Ocurrió un error'}
+          </h1>
+          <p className="text-white/50 text-sm mb-8 leading-relaxed">
+            {timedOut
+              ? 'El servidor está tardando más de lo normal. Puede que el reporte esté procesando en segundo plano.'
+              : 'Hubo un problema al generar tu reporte. Puedes volver a intentarlo.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRetry}
+              disabled={retrying}
+              className="px-6 py-2.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium rounded-sm transition-colors"
+            >
+              {retrying ? 'Iniciando...' : '↺ Volver a intentar'}
+            </button>
+            <a
+              href={`/reporte/${id}`}
+              className="px-6 py-2.5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 text-sm font-medium rounded-sm transition-colors"
+            >
+              Ver reporte (si existe)
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6">
