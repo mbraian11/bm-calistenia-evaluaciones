@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,9 +37,7 @@ export default async function AdminPage() {
       <nav className="border-b border-white/5 bg-black/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-red-700 rounded-sm flex items-center justify-center">
-              <span className="text-white font-bold text-sm">BM</span>
-            </div>
+            <Image src="/logo.png" alt="BM Calistenia" width={40} height={40} className="object-contain" />
             <div>
               <span className="font-semibold text-sm">BM Calistenia</span>
               <span className="text-white/30 text-xs ml-2">Admin</span>
