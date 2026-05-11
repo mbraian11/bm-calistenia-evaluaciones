@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { EvaluacionFormData } from '@/types/evaluacion'
 
 const TOTAL_STEPS = 5
@@ -234,9 +235,7 @@ export default function FormularioEvaluacion() {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-7 h-7 bg-red-700 rounded-sm flex items-center justify-center">
-              <span className="text-white font-bold text-xs">BM</span>
-            </div>
+            <Image src="/logo.png" alt="BM Calistenia" width={40} height={40} className="object-contain" />
             <span className="text-xs text-white/40 uppercase tracking-widest">Evaluación 360°</span>
           </div>
 

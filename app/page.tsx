@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Home() {
   return (
@@ -7,10 +8,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-black/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-red-700 rounded-sm flex items-center justify-center">
-              <span className="text-white font-bold text-sm">BM</span>
-            </div>
-            <span className="font-semibold tracking-wide text-sm uppercase">BM Calistenia</span>
+            <Image src="/logo.png" alt="BM Calistenia" width={44} height={44} className="object-contain" />
           </div>
           <Link href="/evaluacion" className="text-sm text-red-400 hover:text-red-300 transition-colors">
             Iniciar evaluación →

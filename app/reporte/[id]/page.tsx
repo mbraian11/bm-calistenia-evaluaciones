@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -255,9 +256,7 @@ export default async function ReportePage({ params }: { params: Promise<{ id: st
       <div className="border-b border-white/5 bg-black/80 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-red-700 rounded-sm flex items-center justify-center">
-              <span className="text-white font-bold text-xs">BM</span>
-            </div>
+            <Image src="/logo.png" alt="BM Calistenia" width={38} height={38} className="object-contain" />
             <span className="text-xs text-white/40 uppercase tracking-widest">Reporte de Evaluación</span>
           </div>
           <Link href="/evaluacion" className="text-xs text-red-400 hover:text-red-300 transition-colors">

@@ -8,6 +8,10 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 export const metadata: Metadata = {
   title: 'BM Calistenia — Evaluación 360',
   description: 'Evaluación integral de tu desempeño físico y composición corporal en BM Calistenia',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
