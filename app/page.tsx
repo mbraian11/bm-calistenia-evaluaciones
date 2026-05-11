@@ -9,6 +9,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image src="/logo.png" alt="BM Calistenia" width={44} height={44} className="object-contain" />
+            <span className="font-semibold tracking-wide text-sm uppercase">BM Calistenia</span>
           </div>
           <Link href="/evaluacion" className="text-sm text-red-400 hover:text-red-300 transition-colors">
             Iniciar evaluación →

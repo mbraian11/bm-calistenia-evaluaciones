@@ -236,7 +236,10 @@ export default function FormularioEvaluacion() {
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-6">
             <Image src="/logo.png" alt="BM Calistenia" width={40} height={40} className="object-contain" />
-            <span className="text-xs text-white/40 uppercase tracking-widest">Evaluación 360°</span>
+            <div>
+              <p className="text-sm font-semibold tracking-wide uppercase leading-none">BM Calistenia</p>
+              <p className="text-xs text-white/40 uppercase tracking-widest mt-0.5">Evaluación 360°</p>
+            </div>
           </div>
 
           {/* Barra de progreso */}

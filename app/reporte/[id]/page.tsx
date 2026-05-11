@@ -257,7 +257,10 @@ export default async function ReportePage({ params }: { params: Promise<{ id: st
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image src="/logo.png" alt="BM Calistenia" width={38} height={38} className="object-contain" />
-            <span className="text-xs text-white/40 uppercase tracking-widest">Reporte de Evaluación</span>
+            <div>
+              <p className="text-sm font-semibold tracking-wide uppercase leading-none">BM Calistenia</p>
+              <p className="text-xs text-white/40 uppercase tracking-widest mt-0.5">Reporte de Evaluación</p>
+            </div>
           </div>
           <Link href="/evaluacion" className="text-xs text-red-400 hover:text-red-300 transition-colors">
             Nueva evaluación →
