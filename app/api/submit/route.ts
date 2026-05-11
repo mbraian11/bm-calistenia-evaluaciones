@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { EvaluacionFormData } from '@/types/evaluacion'
+
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,13 +57,16 @@ export async function POST(req: NextRequest) {
       await supabase.from('evaluaciones').update(fileUploads).eq('id', id)
     }
 
-    // Disparar generación de reporte en background
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    fetch(`${appUrl}/api/generate-report`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    }).catch(() => {})
+    // Disparar generación de reporte después de responder (after garantiza que Vercel no mata el proceso)
+    const reportId = id
+    after(async () => {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soy.bmcalistenia.com'
+      await fetch(`${appUrl}/api/generate-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: reportId }),
+      }).catch((err) => console.error('[submit] after() fetch error:', err))
+    })
 
     return NextResponse.json({ id, success: true })
   } catch (err: unknown) {
