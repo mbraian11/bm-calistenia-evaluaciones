@@ -247,13 +247,19 @@ const body = await req.json()
       }
     }
 
-    const message = await getAnthropic().messages.create({
+    // Streaming: guardar token a token para no perder contenido si hay timeout
+    let reporte = ''
+    const stream = getAnthropic().messages.stream({
       model: 'claude-sonnet-4-5',
-      max_tokens: 4000,
+      max_tokens: 3000,
       messages: [{ role: 'user', content: userContent }],
     })
 
-    const reporte = message.content[0].type === 'text' ? message.content[0].text : ''
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        reporte += chunk.delta.text
+      }
+    }
 
     // Guardar reporte y marcar completado
     await supabase.from('evaluaciones').update({
@@ -263,7 +269,7 @@ const body = await req.json()
     }).eq('id', id)
 
     // Enviar email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soy.bmcalistenia.com'
     fetch(`${appUrl}/api/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
