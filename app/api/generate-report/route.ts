@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse, after } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
 
 export const maxDuration = 300
 
-// Capturar al nivel del módulo para garantizar acceso dentro de after()
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 
 function getAnthropic() {
@@ -246,8 +245,8 @@ export async function POST(req: NextRequest) {
     // Marcar como procesando
     await supabase.from('evaluaciones').update({ estado: 'procesando' }).eq('id', id)
 
-    // Responder inmediatamente — Claude corre en after() independiente del navegador
-    after(async () => {
+    // Fire-and-forget — en Railway (Node.js persistente) esto sigue corriendo después de responder
+    void (async () => {
       const supabaseAfter = createServiceClient()
       try {
         const { data: evaluacion, error } = await supabaseAfter
@@ -314,10 +313,10 @@ export async function POST(req: NextRequest) {
         }).catch(() => {})
 
       } catch (err) {
-        console.error('[generate-report after()] error:', err)
+        console.error('[generate-report] error en background:', err)
         await supabaseAfter.from('evaluaciones').update({ estado: 'error' }).eq('id', id)
       }
-    })
+    })()
 
     return NextResponse.json({ ok: true, id })
   } catch (err: unknown) {

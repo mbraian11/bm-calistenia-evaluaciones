@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { EvaluacionFormData } from '@/types/evaluacion'
 
@@ -57,16 +57,16 @@ export async function POST(req: NextRequest) {
       await supabase.from('evaluaciones').update(fileUploads).eq('id', id)
     }
 
-    // Disparar generación de reporte después de responder (after garantiza que Vercel no mata el proceso)
+    // Fire-and-forget — llama a generate-report en background (Railway: Node.js persistente)
     const reportId = id
-    after(async () => {
+    void (async () => {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soy.bmcalistenia.com'
       await fetch(`${appUrl}/api/generate-report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: reportId }),
-      }).catch((err) => console.error('[submit] after() fetch error:', err))
-    })
+      }).catch((err) => console.error('[submit] background fetch error:', err))
+    })()
 
     return NextResponse.json({ id, success: true })
   } catch (err: unknown) {
