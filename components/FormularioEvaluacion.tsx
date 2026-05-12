@@ -40,12 +40,12 @@ const PROGRESION_OPTIONS = [
 const GRUPOS_PRUEBAS: {
   key: keyof PruebasFisicasResultados
   titulo: string
-  ejercicios: { key: string; nombre: string; unidad: string }[]
+  variantes: { key: string; nombre: string; unidad: string }[]
 }[] = [
   {
     key: 'pull_ups',
     titulo: 'Pull Ups',
-    ejercicios: [
+    variantes: [
       { key: 'rings_asistidas', nombre: 'Rings pull ups asistidas', unidad: 'reps' },
       { key: 'chin_up_90', nombre: 'Chin up 90°', unidad: 'reps' },
       { key: 'pull_ups', nombre: 'Pull ups', unidad: 'reps' },
@@ -56,7 +56,7 @@ const GRUPOS_PRUEBAS: {
   {
     key: 'push_ups',
     titulo: 'Push Ups',
-    ejercicios: [
+    variantes: [
       { key: 'knee_push_ups', nombre: 'Knee push ups', unidad: 'reps' },
       { key: 'regular_push_ups', nombre: 'Regular push ups', unidad: 'reps' },
       { key: 'pike_push_ups', nombre: 'Pike push ups', unidad: 'reps' },
@@ -66,7 +66,7 @@ const GRUPOS_PRUEBAS: {
   {
     key: 'legs',
     titulo: 'Legs',
-    ejercicios: [
+    variantes: [
       { key: 'sissy_squats', nombre: 'Sissy squats', unidad: 'reps' },
       { key: 'pistol_squats', nombre: 'Pistol squats', unidad: 'reps' },
     ],
@@ -74,7 +74,7 @@ const GRUPOS_PRUEBAS: {
   {
     key: 'pull_hold',
     titulo: 'Pull Hold',
-    ejercicios: [
+    variantes: [
       { key: 'retraccion_pull', nombre: 'Retracción pull', unidad: 'seg' },
       { key: 'chin_up_90_hold', nombre: 'Chin up 90° hold', unidad: 'seg' },
       { key: 'front_lever_activ', nombre: 'Activación front lever', unidad: 'seg' },
@@ -83,7 +83,7 @@ const GRUPOS_PRUEBAS: {
   {
     key: 'dips',
     titulo: 'Dips',
-    ejercicios: [
+    variantes: [
       { key: 'l_sit_hold', nombre: 'L-sit hold', unidad: 'seg' },
       { key: 'negativas_dips', nombre: 'Negativas dips', unidad: 'reps' },
       { key: 'dips_regulares', nombre: 'Dips regulares', unidad: 'reps' },
@@ -104,12 +104,13 @@ function InputField({ label, name, value, onChange, type = 'text', placeholder =
       </label>
       <input
         type={type}
+        inputMode={type === 'number' ? 'numeric' : undefined}
         name={name}
         value={value ?? ''}
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-sm"
+        className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3.5 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-base"
       />
     </div>
   )
@@ -129,7 +130,7 @@ function SelectField({ label, name, value, onChange, options, required = false }
         value={value ?? ''}
         onChange={onChange}
         required={required}
-        className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white focus:outline-none focus:border-red-700 transition-colors text-sm appearance-none"
+        className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3.5 text-white focus:outline-none focus:border-red-700 transition-colors text-base appearance-none"
       >
         <option value="" className="bg-black">Seleccionar...</option>
         {options.map(o => <option key={o.value} value={o.value} className="bg-black">{o.label}</option>)}
@@ -208,7 +209,7 @@ function TextareaField({ label, name, value, onChange, placeholder = '', rows = 
           onChange={onChange}
           placeholder={placeholder}
           rows={rows}
-          className={`w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-sm resize-none ${voice ? 'pr-12' : ''}`}
+          className={`w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3.5 text-white placeholder-white/20 focus:outline-none focus:border-red-700 transition-colors text-base resize-none ${voice ? 'pr-12' : ''}`}
         />
         {voice && onVoiceInput && <VoiceButton onText={onVoiceInput} />}
       </div>
@@ -244,23 +245,42 @@ export default function FormularioEvaluacion() {
     }))
   }
 
+  const handleVarianteSelect = (
+    grupo: keyof PruebasFisicasResultados,
+    varianteKey: string | undefined,
+    varianteNombre: string | undefined
+  ) => {
+    setForm(prev => ({
+      ...prev,
+      pruebas_fisicas_resultados: {
+        ...prev.pruebas_fisicas_resultados,
+        [grupo]: varianteKey
+          ? { variante: varianteKey, variante_nombre: varianteNombre, serie_1: undefined, serie_2: undefined, promedio: undefined, progresion: undefined }
+          : {},
+      },
+    }))
+  }
+
   const handlePruebaChange = (
     grupo: keyof PruebasFisicasResultados,
-    ejercicio: string,
     field: keyof PruebaEjercicio,
     val: string | number | undefined
   ) => {
     setForm(prev => {
-      const grupoActual = (prev.pruebas_fisicas_resultados?.[grupo] ?? {}) as Record<string, PruebaEjercicio>
-      const ejercicioActual = grupoActual[ejercicio] ?? {}
+      const actual = prev.pruebas_fisicas_resultados?.[grupo] ?? {}
+      const updated = { ...actual, [field]: val }
+      if (field === 'serie_1' || field === 'serie_2') {
+        const s1 = field === 'serie_1' ? (val as number) : actual.serie_1
+        const s2 = field === 'serie_2' ? (val as number) : actual.serie_2
+        if (s1 !== undefined && s2 !== undefined) {
+          updated.promedio = Math.round(((s1 + s2) / 2) * 10) / 10
+        }
+      }
       return {
         ...prev,
         pruebas_fisicas_resultados: {
           ...prev.pruebas_fisicas_resultados,
-          [grupo]: {
-            ...grupoActual,
-            [ejercicio]: { ...ejercicioActual, [field]: val },
-          },
+          [grupo]: updated,
         },
       }
     })
@@ -317,7 +337,7 @@ export default function FormularioEvaluacion() {
   const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-8 md:py-12">
+    <div className="min-h-screen bg-black text-white px-4 py-8 md:py-12 pb-28">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-10">
@@ -543,64 +563,98 @@ export default function FormularioEvaluacion() {
           )}
 
           {step === 6 && (
-            <div className="space-y-8">
-              <div>
-                <p className="text-xs text-white/40 leading-relaxed">
-                  Registra el <strong className="text-white/60">promedio de tus 2 series</strong> en cada ejercicio y cómo progresaste. Deja en blanco los que no aplican.
-                </p>
-              </div>
+            <div className="space-y-6">
+              <p className="text-xs text-white/40 leading-relaxed">
+                Selecciona la variante que haces en cada categoría, ingresa tus 2 series y el promedio se calcula solo.
+              </p>
 
               {GRUPOS_PRUEBAS.map(grupo => {
-                const grupoData = (form.pruebas_fisicas_resultados?.[grupo.key] ?? {}) as Record<string, PruebaEjercicio>
+                const datos = form.pruebas_fisicas_resultados?.[grupo.key] ?? {}
+                const varianteSeleccionada = datos.variante ?? ''
+                const varianteInfo = grupo.variantes.find(v => v.key === varianteSeleccionada)
+                const unidad = varianteInfo?.unidad ?? 'reps'
+
                 return (
-                  <div key={grupo.key} className="space-y-3">
-                    <h3 className="text-xs font-semibold text-white/50 uppercase tracking-widest border-b border-white/5 pb-2">
-                      {grupo.titulo}
-                    </h3>
+                  <div key={grupo.key} className="bg-white/[0.02] border border-white/5 rounded-sm p-4 space-y-4">
+                    <h3 className="text-xs font-semibold text-white/50 uppercase tracking-widest">{grupo.titulo}</h3>
+
+                    {/* Selección de variante */}
                     <div className="space-y-2">
-                      {grupo.ejercicios.map(ej => {
-                        const val = grupoData[ej.key] ?? {}
-                        return (
-                          <div key={ej.key} className="bg-white/[0.02] border border-white/5 rounded-sm px-4 py-3">
-                            <p className="text-sm text-white/80 mb-2">{ej.nombre}</p>
-                            <div className="flex gap-3">
-                              <div className="flex-1">
-                                <label className="text-xs text-white/30 block mb-1">Promedio</label>
-                                <div className="flex items-center gap-1.5">
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    value={val.promedio ?? ''}
-                                    onChange={e => handlePruebaChange(
-                                      grupo.key,
-                                      ej.key,
-                                      'promedio',
-                                      e.target.value ? Number(e.target.value) : undefined
-                                    )}
-                                    placeholder="0"
-                                    className="w-20 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-red-700 transition-colors"
-                                  />
-                                  <span className="text-xs text-white/30">{ej.unidad}</span>
-                                </div>
-                              </div>
-                              <div className="flex-1">
-                                <label className="text-xs text-white/30 block mb-1">Progresión</label>
-                                <select
-                                  value={val.progresion ?? ''}
-                                  onChange={e => handlePruebaChange(grupo.key, ej.key, 'progresion', e.target.value || undefined)}
-                                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-red-700 transition-colors appearance-none"
-                                >
-                                  <option value="" className="bg-black">—</option>
-                                  {PROGRESION_OPTIONS.map(o => (
-                                    <option key={o.value} value={o.value} className="bg-black">{o.label}</option>
-                                  ))}
-                                </select>
-                              </div>
+                      <label className="text-xs text-white/40">¿Cuál variante haces?</label>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {grupo.variantes.map(v => (
+                          <button
+                            key={v.key}
+                            type="button"
+                            onClick={() => handleVarianteSelect(grupo.key, varianteSeleccionada === v.key ? undefined : v.key, varianteSeleccionada === v.key ? undefined : v.nombre)}
+                            className={`text-left px-3 py-2 rounded-sm text-sm transition-colors border ${
+                              varianteSeleccionada === v.key
+                                ? 'bg-red-900/30 border-red-700/60 text-white'
+                                : 'bg-white/[0.02] border-white/5 text-white/50 hover:border-white/20 hover:text-white/80'
+                            }`}
+                          >
+                            {v.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Series y promedio — solo si hay variante seleccionada */}
+                    {varianteSeleccionada && (
+                      <div className="space-y-3 pt-1 border-t border-white/5">
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-xs text-white/30 block mb-1.5">Serie 1</label>
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" inputMode="numeric" min={0}
+                                value={datos.serie_1 ?? ''}
+                                onChange={e => handlePruebaChange(grupo.key, 'serie_1', e.target.value ? Number(e.target.value) : undefined)}
+                                placeholder="0"
+                                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-3 text-white text-base text-center focus:outline-none focus:border-red-700 transition-colors"
+                              />
                             </div>
                           </div>
-                        )
-                      })}
-                    </div>
+                          <div>
+                            <label className="text-xs text-white/30 block mb-1.5">Serie 2</label>
+                            <input
+                              type="number" inputMode="numeric" min={0}
+                              value={datos.serie_2 ?? ''}
+                              onChange={e => handlePruebaChange(grupo.key, 'serie_2', e.target.value ? Number(e.target.value) : undefined)}
+                              placeholder="0"
+                              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-3 text-white text-base text-center focus:outline-none focus:border-red-700 transition-colors"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-white/30 block mb-1.5">Promedio</label>
+                            <div className="flex items-center gap-1.5 h-[38px] px-3 bg-red-950/20 border border-red-800/20 rounded-sm">
+                              <span className="text-white font-semibold text-sm">{datos.promedio ?? '—'}</span>
+                              <span className="text-xs text-white/30">{unidad}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-white/30 block mb-1.5">Progresión</label>
+                          <div className="flex gap-2">
+                            {PROGRESION_OPTIONS.map(o => (
+                              <button
+                                key={o.value}
+                                type="button"
+                                onClick={() => handlePruebaChange(grupo.key, 'progresion', datos.progresion === o.value ? undefined : o.value)}
+                                className={`flex-1 py-1.5 text-xs rounded-sm border transition-colors ${
+                                  datos.progresion === o.value
+                                    ? 'bg-red-900/40 border-red-700/60 text-white'
+                                    : 'bg-white/[0.02] border-white/10 text-white/40 hover:text-white/70'
+                                }`}
+                              >
+                                {o.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -764,12 +818,12 @@ export default function FormularioEvaluacion() {
           </div>
         )}
 
-        {/* Navegación */}
-        <div className="flex justify-between items-center mt-6">
+        {/* Navegación sticky — siempre visible en móvil */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/5 px-4 py-3 flex justify-between items-center gap-3">
           <button
             onClick={handleBack}
             disabled={step === 1}
-            className="px-6 py-3 text-sm text-white/40 hover:text-white disabled:opacity-0 transition-colors"
+            className="px-5 py-3 text-sm text-white/50 hover:text-white disabled:opacity-0 transition-colors"
           >
             ← Anterior
           </button>
@@ -777,7 +831,7 @@ export default function FormularioEvaluacion() {
           {step < TOTAL_STEPS ? (
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-red-700 hover:bg-red-600 text-white rounded-sm font-semibold text-sm transition-all hover:shadow-[0_0_20px_rgba(185,28,28,0.4)]"
+              className="flex-1 py-3.5 bg-red-700 hover:bg-red-600 active:bg-red-800 text-white rounded-sm font-semibold text-sm transition-all"
             >
               Siguiente →
             </button>
@@ -785,7 +839,7 @@ export default function FormularioEvaluacion() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-8 py-3 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white rounded-sm font-semibold text-sm transition-all hover:shadow-[0_0_20px_rgba(185,28,28,0.4)] flex items-center gap-2"
+              className="flex-1 py-3.5 bg-red-700 hover:bg-red-600 active:bg-red-800 disabled:opacity-50 text-white rounded-sm font-semibold text-sm transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

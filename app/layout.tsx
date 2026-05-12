@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     icon: '/favicon.png',
     apple: '/favicon.png',
   },
+  other: {
+    'theme-color': '#000000',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -72,39 +72,21 @@ export interface InBodyResultados {
 }
 
 export interface PruebaEjercicio {
+  variante?: string
+  variante_nombre?: string
+  serie_1?: number
+  serie_2?: number
   promedio?: number
-  progresion?: string // 'primera_vez' | 'subio' | 'igual' | 'bajo'
+  progresion?: string
+  unidad?: string
 }
 
 export interface PruebasFisicasResultados {
-  pull_ups?: {
-    rings_asistidas?: PruebaEjercicio
-    chin_up_90?: PruebaEjercicio
-    pull_ups?: PruebaEjercicio
-    chest_to_bar?: PruebaEjercicio
-    front_lever_pull_ups?: PruebaEjercicio
-  }
-  push_ups?: {
-    knee_push_ups?: PruebaEjercicio
-    regular_push_ups?: PruebaEjercicio
-    pike_push_ups?: PruebaEjercicio
-    hspu_wall?: PruebaEjercicio
-  }
-  legs?: {
-    sissy_squats?: PruebaEjercicio
-    pistol_squats?: PruebaEjercicio
-  }
-  pull_hold?: {
-    retraccion_pull?: PruebaEjercicio
-    chin_up_90_hold?: PruebaEjercicio
-    front_lever_activ?: PruebaEjercicio
-  }
-  dips?: {
-    l_sit_hold?: PruebaEjercicio
-    negativas_dips?: PruebaEjercicio
-    dips_regulares?: PruebaEjercicio
-    planche_dips?: PruebaEjercicio
-  }
+  pull_ups?: PruebaEjercicio
+  push_ups?: PruebaEjercicio
+  legs?: PruebaEjercicio
+  pull_hold?: PruebaEjercicio
+  dips?: PruebaEjercicio
 }
 
 export type EvaluacionFormData = Omit<Evaluacion, 'id' | 'created_at' | 'updated_at' | 'estado' | 'reporte_completo' | 'reporte_generado_at'>
