@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
 
-export const maxDuration = 60
+export const maxDuration = 300
 
 // Capturar al nivel del módulo para garantizar acceso dentro de after()
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
@@ -239,11 +239,22 @@ export async function POST(req: NextRequest) {
           } catch { /* continúa sin imagen */ }
         }
 
-        const message = await getAnthropic().messages.create({
-          model: 'claude-sonnet-4-5',
-          max_tokens: 3000,
-          messages: [{ role: 'user', content: userContent }],
-        })
+        const abortController = new AbortController()
+        const claudeTimeout = setTimeout(() => abortController.abort(), 240_000) // 240s — deja margen antes del límite de 300s
+
+        let message
+        try {
+          message = await getAnthropic().messages.create(
+            {
+              model: 'claude-sonnet-4-5',
+              max_tokens: 4000,
+              messages: [{ role: 'user', content: userContent }],
+            },
+            { signal: abortController.signal }
+          )
+        } finally {
+          clearTimeout(claudeTimeout)
+        }
 
         const reporte = message.content[0].type === 'text' ? message.content[0].text : ''
 
