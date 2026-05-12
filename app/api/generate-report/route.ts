@@ -19,6 +19,45 @@ function buildPrompt(e: Evaluacion): string {
   const factorProteina = genero === 'femenino' ? 1.7 : 1.8
   const proteinaG = e.peso_kg ? Math.round(factorProteina * e.peso_kg) : null
 
+  const pr = e.pruebas_fisicas_resultados
+
+  const fmtPrueba = (val: { promedio?: number; progresion?: string } | undefined, unidad: string) => {
+    if (!val?.promedio && !val?.progresion) return 'No registrado'
+    const prog = val.progresion === 'primera_vez' ? '1ª vez' : val.progresion === 'subio' ? '↑ Subió' : val.progresion === 'igual' ? '→ Igual' : val.progresion === 'bajo' ? '↓ Bajó' : ''
+    return `${val.promedio ?? '?'} ${unidad}${prog ? ` | ${prog}` : ''}`
+  }
+
+  const bloquePruebas = pr ? `
+**Resultados pruebas físicas (promedio 2 series | progresión):**
+
+PULL UPS:
+- Rings pull ups asistidas: ${fmtPrueba(pr.pull_ups?.rings_asistidas, 'reps')}
+- Chin up 90°: ${fmtPrueba(pr.pull_ups?.chin_up_90, 'reps')}
+- Pull ups: ${fmtPrueba(pr.pull_ups?.pull_ups, 'reps')}
+- Chest to bar: ${fmtPrueba(pr.pull_ups?.chest_to_bar, 'reps')}
+- Front lever activ. pull ups: ${fmtPrueba(pr.pull_ups?.front_lever_pull_ups, 'reps')}
+
+PUSH UPS:
+- Knee push ups: ${fmtPrueba(pr.push_ups?.knee_push_ups, 'reps')}
+- Regular push ups: ${fmtPrueba(pr.push_ups?.regular_push_ups, 'reps')}
+- Pike push ups: ${fmtPrueba(pr.push_ups?.pike_push_ups, 'reps')}
+- Handstand push up wall: ${fmtPrueba(pr.push_ups?.hspu_wall, 'reps')}
+
+LEGS:
+- Sissy squats: ${fmtPrueba(pr.legs?.sissy_squats, 'reps')}
+- Pistol squats: ${fmtPrueba(pr.legs?.pistol_squats, 'reps')}
+
+PULL HOLD:
+- Retracción pull: ${fmtPrueba(pr.pull_hold?.retraccion_pull, 'seg')}
+- Chin up 90° hold: ${fmtPrueba(pr.pull_hold?.chin_up_90_hold, 'seg')}
+- Activación front lever: ${fmtPrueba(pr.pull_hold?.front_lever_activ, 'seg')}
+
+DIPS:
+- L-sit hold: ${fmtPrueba(pr.dips?.l_sit_hold, 'seg')}
+- Negativas dips: ${fmtPrueba(pr.dips?.negativas_dips, 'reps')}
+- Dips regulares: ${fmtPrueba(pr.dips?.dips_regulares, 'reps')}
+- Activación planche dips: ${fmtPrueba(pr.dips?.planche_dips, 'reps')}` : '**Resultados pruebas físicas:** No registrados'
+
   return `Eres el sistema de análisis científico de la Evaluación 360° de BM Calistenia, academia de calistenia en Panamá dirigida por el Coach Braian Meléndez.
 
 Genera un reporte profundo, personalizado y basado en evidencia científica actualizada. Tono profesional pero cercano, directo y motivador — como si el coach le hablara personalmente al alumno. Usa "tú" y el nombre del alumno a lo largo del reporte. Basa TODAS las recomendaciones en revisiones sistemáticas y meta-análisis recientes.
@@ -71,6 +110,8 @@ ${inbody ? `- Masa muscular: ${inbody.musculo ?? 'N/D'}
 - Lesiones pasadas: ${e.lesiones_pasadas ?? 'Ninguna'}
 - Medicamentos: ${e.medicamentos ?? 'Ninguno'}
 - Actividad física extra: ${e.actividad_extra ?? 'Ninguna'} — ${e.frecuencia_actividad_extra ?? ''}
+
+${bloquePruebas}
 
 **CONTEXTO BM CALISTENIA — sesiones presenciales:**
 - Lunes: Pull & Push (push-ups, pull-ups, dips, front lever, L-sit, core tabata) ~75 min

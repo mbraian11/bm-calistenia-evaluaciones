@@ -3,16 +3,17 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { EvaluacionFormData } from '@/types/evaluacion'
+import { EvaluacionFormData, PruebasFisicasResultados, PruebaEjercicio } from '@/types/evaluacion'
 
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 6
 
 const stepTitles = [
   'Datos personales',
   'Programa y objetivo',
   'Día a día y alimentación',
   'Salud y lesiones',
-  'Pruebas físicas e InBody',
+  'InBody y entrenamiento',
+  'Resultados de pruebas físicas',
 ]
 
 const initialForm: EvaluacionFormData = {
@@ -26,7 +27,70 @@ const initialForm: EvaluacionFormData = {
   sesiones_semana_bm: undefined,
   sesion_1_descripcion: '', sesion_2_descripcion: '', sesion_3_descripcion: '',
   nivel_cansancio: undefined, percepcion_rendimiento: '',
+  pruebas_fisicas_resultados: {},
 }
+
+const PROGRESION_OPTIONS = [
+  { value: 'primera_vez', label: '1ª vez' },
+  { value: 'subio', label: '↑ Subió' },
+  { value: 'igual', label: '→ Igual' },
+  { value: 'bajo', label: '↓ Bajó' },
+]
+
+const GRUPOS_PRUEBAS: {
+  key: keyof PruebasFisicasResultados
+  titulo: string
+  ejercicios: { key: string; nombre: string; unidad: string }[]
+}[] = [
+  {
+    key: 'pull_ups',
+    titulo: 'Pull Ups',
+    ejercicios: [
+      { key: 'rings_asistidas', nombre: 'Rings pull ups asistidas', unidad: 'reps' },
+      { key: 'chin_up_90', nombre: 'Chin up 90°', unidad: 'reps' },
+      { key: 'pull_ups', nombre: 'Pull ups', unidad: 'reps' },
+      { key: 'chest_to_bar', nombre: 'Chest to bar', unidad: 'reps' },
+      { key: 'front_lever_pull_ups', nombre: 'Front lever activ. pull ups', unidad: 'reps' },
+    ],
+  },
+  {
+    key: 'push_ups',
+    titulo: 'Push Ups',
+    ejercicios: [
+      { key: 'knee_push_ups', nombre: 'Knee push ups', unidad: 'reps' },
+      { key: 'regular_push_ups', nombre: 'Regular push ups', unidad: 'reps' },
+      { key: 'pike_push_ups', nombre: 'Pike push ups', unidad: 'reps' },
+      { key: 'hspu_wall', nombre: 'Handstand push up wall', unidad: 'reps' },
+    ],
+  },
+  {
+    key: 'legs',
+    titulo: 'Legs',
+    ejercicios: [
+      { key: 'sissy_squats', nombre: 'Sissy squats', unidad: 'reps' },
+      { key: 'pistol_squats', nombre: 'Pistol squats', unidad: 'reps' },
+    ],
+  },
+  {
+    key: 'pull_hold',
+    titulo: 'Pull Hold',
+    ejercicios: [
+      { key: 'retraccion_pull', nombre: 'Retracción pull', unidad: 'seg' },
+      { key: 'chin_up_90_hold', nombre: 'Chin up 90° hold', unidad: 'seg' },
+      { key: 'front_lever_activ', nombre: 'Activación front lever', unidad: 'seg' },
+    ],
+  },
+  {
+    key: 'dips',
+    titulo: 'Dips',
+    ejercicios: [
+      { key: 'l_sit_hold', nombre: 'L-sit hold', unidad: 'seg' },
+      { key: 'negativas_dips', nombre: 'Negativas dips', unidad: 'reps' },
+      { key: 'dips_regulares', nombre: 'Dips regulares', unidad: 'reps' },
+      { key: 'planche_dips', nombre: 'Activación planche dips', unidad: 'reps' },
+    ],
+  },
+]
 
 
 function InputField({ label, name, value, onChange, type = 'text', placeholder = '', required = false }: {
@@ -178,6 +242,28 @@ export default function FormularioEvaluacion() {
       ...prev,
       inbody_resultados: { ...prev.inbody_resultados, [name]: value }
     }))
+  }
+
+  const handlePruebaChange = (
+    grupo: keyof PruebasFisicasResultados,
+    ejercicio: string,
+    field: keyof PruebaEjercicio,
+    val: string | number | undefined
+  ) => {
+    setForm(prev => {
+      const grupoActual = (prev.pruebas_fisicas_resultados?.[grupo] ?? {}) as Record<string, PruebaEjercicio>
+      const ejercicioActual = grupoActual[ejercicio] ?? {}
+      return {
+        ...prev,
+        pruebas_fisicas_resultados: {
+          ...prev.pruebas_fisicas_resultados,
+          [grupo]: {
+            ...grupoActual,
+            [ejercicio]: { ...ejercicioActual, [field]: val },
+          },
+        },
+      }
+    })
   }
 
   const appendVoiceText = (field: keyof EvaluacionFormData) => (text: string) => {
@@ -454,6 +540,71 @@ export default function FormularioEvaluacion() {
                 ]}
               />
             </>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-8">
+              <div>
+                <p className="text-xs text-white/40 leading-relaxed">
+                  Registra el <strong className="text-white/60">promedio de tus 2 series</strong> en cada ejercicio y cómo progresaste. Deja en blanco los que no aplican.
+                </p>
+              </div>
+
+              {GRUPOS_PRUEBAS.map(grupo => {
+                const grupoData = (form.pruebas_fisicas_resultados?.[grupo.key] ?? {}) as Record<string, PruebaEjercicio>
+                return (
+                  <div key={grupo.key} className="space-y-3">
+                    <h3 className="text-xs font-semibold text-white/50 uppercase tracking-widest border-b border-white/5 pb-2">
+                      {grupo.titulo}
+                    </h3>
+                    <div className="space-y-2">
+                      {grupo.ejercicios.map(ej => {
+                        const val = grupoData[ej.key] ?? {}
+                        return (
+                          <div key={ej.key} className="bg-white/[0.02] border border-white/5 rounded-sm px-4 py-3">
+                            <p className="text-sm text-white/80 mb-2">{ej.nombre}</p>
+                            <div className="flex gap-3">
+                              <div className="flex-1">
+                                <label className="text-xs text-white/30 block mb-1">Promedio</label>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    value={val.promedio ?? ''}
+                                    onChange={e => handlePruebaChange(
+                                      grupo.key,
+                                      ej.key,
+                                      'promedio',
+                                      e.target.value ? Number(e.target.value) : undefined
+                                    )}
+                                    placeholder="0"
+                                    className="w-20 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-red-700 transition-colors"
+                                  />
+                                  <span className="text-xs text-white/30">{ej.unidad}</span>
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <label className="text-xs text-white/30 block mb-1">Progresión</label>
+                                <select
+                                  value={val.progresion ?? ''}
+                                  onChange={e => handlePruebaChange(grupo.key, ej.key, 'progresion', e.target.value || undefined)}
+                                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-red-700 transition-colors appearance-none"
+                                >
+                                  <option value="" className="bg-black">—</option>
+                                  {PROGRESION_OPTIONS.map(o => (
+                                    <option key={o.value} value={o.value} className="bg-black">{o.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
 
           {step === 5 && (
