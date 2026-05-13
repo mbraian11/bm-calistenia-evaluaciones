@@ -65,3 +65,19 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent, #B91C1C, transparent);
 }
+
+/* Estilos de impresión / PDF */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #ffffff !important; color: #111111 !important; }
+  .no-print { display: none !important; }
+  .print-page { background: #ffffff !important; color: #111111 !important; }
+  .print-page * { color: #111111 !important; border-color: #e5e7eb !important; background-color: transparent !important; }
+  .print-page h1, .print-page h2, .print-page h3 { color: #111111 !important; }
+  .print-page strong { color: #111111 !important; }
+  .print-page table { border-collapse: collapse; width: 100%; }
+  .print-page th, .print-page td { border: 1px solid #d1d5db !important; padding: 6px 10px !important; text-align: left; }
+  .print-page th { background: #f3f4f6 !important; font-weight: 600; }
+  a { color: #B91C1C !important; }
+  @page { margin: 1.5cm; }
+}

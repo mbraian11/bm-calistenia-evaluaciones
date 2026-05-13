@@ -3,6 +3,7 @@ import { Evaluacion } from '@/types/evaluacion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
+import BotonPDF from './BotonPDF'
 
 export const dynamic = 'force-dynamic'
 
@@ -251,7 +252,7 @@ export default async function ReportePage({ params }: { params: Promise<{ id: st
     : null
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white print-page">
       {/* Header */}
       <div className="border-b border-white/5 bg-black/80 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
@@ -262,9 +263,12 @@ export default async function ReportePage({ params }: { params: Promise<{ id: st
               <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5 hidden sm:block">Reporte de Evaluación</p>
             </div>
           </div>
-          <Link href="/evaluacion" className="text-xs text-red-400 hover:text-red-300 transition-colors whitespace-nowrap">
-            Nueva evaluación →
-          </Link>
+          <div className="flex items-center gap-3">
+            <BotonPDF nombre={evaluacion.nombre} />
+            <Link href="/evaluacion" className="no-print text-xs text-red-400 hover:text-red-300 transition-colors whitespace-nowrap hidden sm:block">
+              Nueva evaluación →
+            </Link>
+          </div>
         </div>
       </div>
 

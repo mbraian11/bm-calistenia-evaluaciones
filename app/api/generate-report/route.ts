@@ -265,7 +265,7 @@ export async function POST(req: NextRequest) {
           message = await getAnthropic().messages.create(
             {
               model: 'claude-sonnet-4-5',
-              max_tokens: 4000,
+              max_tokens: 8000,
               messages: [{ role: 'user', content: userContent }],
             },
             { signal: abortController.signal }
