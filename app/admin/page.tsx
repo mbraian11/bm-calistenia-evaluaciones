@@ -121,11 +121,9 @@ export default async function AdminPage() {
                           <td className="px-6 py-4 text-right">
                             {e.estado === 'completado' ? (
                               <Link href={`/reporte/${e.id}`} className="text-xs text-red-400 hover:text-red-300 transition-colors">Ver reporte →</Link>
-                            ) : e.estado === 'pendiente' || e.estado === 'error' ? (
+                            ) : e.estado === 'pendiente' || e.estado === 'error' || e.estado === 'procesando' ? (
                               <RegenerarButton id={e.id!} />
-                            ) : (
-                              <span className="text-xs text-blue-400">Procesando...</span>
-                            )}
+                            ) : null}
                           </td>
                         </tr>
                       )
