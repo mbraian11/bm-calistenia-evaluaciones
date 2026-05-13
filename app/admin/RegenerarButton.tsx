@@ -3,13 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function RegenerarButton({ id }: { id: string }) {
+export default function RegenerarButton({ id, label }: { id: string; label?: string }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleRegenerar = async () => {
     setLoading(true)
-    // Resetear a pendiente para que el chequeo de idempotencia lo permita
     await fetch('/api/reset-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,7 +23,7 @@ export default function RegenerarButton({ id }: { id: string }) {
       disabled={loading}
       className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-50 transition-colors"
     >
-      {loading ? 'Iniciando...' : '↺ Regenerar'}
+      {loading ? '...' : (label ?? '↺ Regenerar')}
     </button>
   )
 }

@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
     .from('evaluaciones')
     .update({ estado: 'pendiente' })
     .eq('id', id)
-    .neq('estado', 'completado') // nunca resetear uno completado
 
   return NextResponse.json({ ok: true })
 }
