@@ -120,8 +120,6 @@ export default async function AdminPage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             {e.estado === 'completado' ? (
-                              <Link href={`/reporte/${e.id}`} className="text-xs text-red-400 hover:text-red-300 transition-colors">Ver reporte →</Link>
-                            ) : e.estado === 'completado' ? (
                               <div className="flex items-center gap-3 justify-end">
                                 <Link href={`/reporte/${e.id}`} className="text-xs text-red-400 hover:text-red-300 transition-colors">Ver reporte →</Link>
                                 <RegenerarButton id={e.id!} label="↺" />

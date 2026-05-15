@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createServiceClient } from '@/lib/supabase'
 import { Evaluacion } from '@/types/evaluacion'
+import { Resend } from 'resend'
+import puppeteer from 'puppeteer'
 
 export const maxDuration = 300
 
@@ -282,13 +284,86 @@ export async function POST(req: NextRequest) {
           reporte_generado_at: new Date().toISOString(),
         }).eq('id', id)
 
-        // Email
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soy.bmcalistenia.com'
-        fetch(`${appUrl}/api/send-email`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, nombre: evaluacion.nombre, email: evaluacion.email }),
-        }).catch(() => {})
+        const reporteUrl = `${appUrl}/reporte/${id}`
+
+        // Generar PDF con puppeteer
+        let pdfBuffer: Buffer | undefined
+        try {
+          const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+            headless: true,
+          })
+          const page = await browser.newPage()
+          await page.emulateMediaType('print')
+          await page.goto(reporteUrl, { waitUntil: 'networkidle0', timeout: 60000 })
+          await page.waitForSelector('.print-page', { timeout: 15000 }).catch(() => {})
+          const pdf = await page.pdf({
+            format: 'A4',
+            margin: { top: '1.5cm', right: '1.5cm', bottom: '1.5cm', left: '1.5cm' },
+            printBackground: true,
+          })
+          await browser.close()
+          pdfBuffer = Buffer.from(pdf)
+          console.log('[generate-report] PDF generado correctamente')
+        } catch (pdfErr) {
+          console.error('[generate-report] Error generando PDF:', pdfErr)
+        }
+
+        // Enviar email con PDF adjunto
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY)
+          const primerParrafo = reporte
+            .split('\n\n')
+            .find((p: string) => p.length > 100 && !p.startsWith('#'))
+            ?.slice(0, 300) || ''
+
+          const nombreArchivo = `Reporte-BM-Calistenia-${evaluacion.nombre.replace(/\s+/g, '-')}.pdf`
+
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'BM Calistenia <onboarding@resend.dev>',
+            to: [evaluacion.email],
+            subject: `${evaluacion.nombre}, tu Evaluación 360° está lista — BM Calistenia`,
+            html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:'Inter',Arial,sans-serif;color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
+    <div style="border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:24px;margin-bottom:32px;">
+      <div style="display:inline-flex;align-items:center;gap:12px;">
+        <div style="width:32px;height:32px;background-color:#B91C1C;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;">
+          <span style="color:#ffffff;font-weight:700;font-size:12px;">BM</span>
+        </div>
+        <span style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);">BM Calistenia</span>
+      </div>
+    </div>
+    <div style="margin-bottom:24px;">
+      <span style="background-color:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.3);border-radius:100px;padding:6px 14px;font-size:11px;color:#4ade80;text-transform:uppercase;letter-spacing:0.1em;">● Evaluación completada</span>
+    </div>
+    <h1 style="font-family:Georgia,serif;font-size:32px;font-weight:700;margin:0 0 16px;line-height:1.2;">Tu reporte está listo,<br>${evaluacion.nombre}</h1>
+    <p style="color:rgba(255,255,255,0.5);font-size:15px;line-height:1.6;margin:0 0 24px;">Hemos completado el análisis de tu Evaluación 360°. Tu reporte personalizado, generado por inteligencia artificial, ya está disponible.${pdfBuffer ? ' También lo encontrarás adjunto en este email como PDF.' : ''}</p>
+    ${primerParrafo ? `<div style="background-color:rgba(185,28,28,0.08);border-left:2px solid #B91C1C;padding:16px 20px;margin-bottom:32px;border-radius:0 4px 4px 0;"><p style="margin:0;font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;font-style:italic;">"${primerParrafo}..."</p></div>` : ''}
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${reporteUrl}" style="display:inline-block;background-color:#B91C1C;color:#ffffff;text-decoration:none;padding:16px 40px;font-size:15px;font-weight:600;border-radius:2px;letter-spacing:0.02em;">Ver mi reporte completo →</a>
+    </div>
+    <p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:16px 0 0;">O copia este link en tu navegador:<br><a href="${reporteUrl}" style="color:#B91C1C;text-decoration:none;word-break:break-all;">${reporteUrl}</a></p>
+    <div style="border-top:1px solid rgba(255,255,255,0.05);margin:40px 0 24px;"></div>
+    <div style="text-align:center;">
+      <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">© 2025 BM Calistenia. Panamá.</p>
+      <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:8px 0 0;">Este email fue enviado porque completaste una Evaluación 360° en BM Calistenia.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+            ...(pdfBuffer ? { attachments: [{ filename: nombreArchivo, content: pdfBuffer }] } : {}),
+          })
+          console.log('[generate-report] Email enviado a', evaluacion.email)
+        } catch (emailErr) {
+          console.error('[generate-report] Error enviando email:', emailErr)
+        }
 
       } catch (err) {
         console.error('[generate-report] error en background:', err)
